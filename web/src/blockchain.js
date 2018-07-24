@@ -1,0 +1,179 @@
+// Interface to ethereum
+import Web3 from 'web3';
+
+const web3 = new Web3(window.web3.currentProvider);
+
+export function getMetamaskAddress () {
+    // Supposedly one should use web3.eth.accounts[0] according to the document 
+    // https://github.com/MetaMask/faq/blob/master/DEVELOPERS.md .
+    // But it seems that API is not compatible with web3 1.0 and throws.
+    // So here is the hack:
+    return web3.currentProvider.publicConfigStore.getState().selectedAddress;
+}
+
+export function didUserCancelTx (error) {
+    return error.message.indexOf('MetaMask Tx Signature: User denied transaction signature.') !== 0;
+}
+
+export function propose (contractAddress, proposal, voteYes) {
+    console.log('propose %s (%s) to %s', proposal, voteYes, contractAddress);
+    const contract = new web3.eth.Contract(ABI, contractAddress);
+    return contract.methods.propose(proposal, voteYes).send({from: getMetamaskAddress()});
+}
+
+export function getResult (contractAddress, proposal) {
+    const contract = new web3.eth.Contract(ABI, contractAddress);
+    return contract.methods.result(proposal).call();
+}
+
+// Return the vote of current MetaMask account:
+// '0': not voted, '1': yes, '2': no
+export function getMyVote (contractAddress, proposal) {
+    const contract = new web3.eth.Contract(ABI, contractAddress);
+    return contract.methods.getVote(proposal, getMetamaskAddress()).call();
+}
+
+
+export function vote (contractAddress, proposal, voteYes) {
+    const contract = new web3.eth.Contract(ABI, contractAddress);
+    return contract.methods.vote(proposal, voteYes).send({from: getMetamaskAddress()});
+}
+
+export function create (addressList) {
+    const contract = new web3.eth.Contract(ABI);
+    return contract.deploy({data: BYTECODE, arguments: [addressList]}).send({from: getMetamaskAddress()});
+}
+
+const BYTECODE = "0x608060405234801561001057600080fd5b506040516109ed3803806109ed8339810180604052810190808051820192919050505060008090505b81518110156100bd576001600080848481518110151561005557fe5b9060200190602002015173ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060006101000a81548160ff0219169083151502179055508080600101915050610039565b81516001819055505050610917806100d66000396000f300608060405260043610610078576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806311aee3801461007d578063159b8710146100a857806327d3410c146101335780632819d28a146101a8578063772ccf5d1461021d5780639b4326fb14610278575b600080fd5b34801561008957600080fd5b50610092610323565b6040518082815260200191505060405180910390f35b3480156100b457600080fd5b5061010f600480360381019080803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509192919290505050610329565b60405180848152602001838152602001828152602001935050505060405180910390f35b34801561013f57600080fd5b506101a6600480360381019080803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843782019150505050505091929192908035151590602001909291905050506103ca565b005b3480156101b457600080fd5b5061021b600480360381019080803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843782019150505050505091929192908035151590602001909291905050506105ad565b005b34801561022957600080fd5b5061025e600480360381019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610808565b604051808215151515815260200191505060405180910390f35b34801561028457600080fd5b506102ff600480360381019080803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509192919290803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610828565b6040518082600281111561030f57fe5b60ff16815260200191505060405180910390f35b60015481565b6000806000806002856040518082805190602001908083835b6020831015156103675780518252602082019150602081019050602083039250610342565b6001836020036101000a03801982511681845116808217855250505050505090500191505090815260200160405180910390209050600081600001541115156103af57600080fd5b80600001548160010154600154935093509350509193909250565b60008060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060009054906101000a900460ff16151561042357600080fd5b6002836040518082805190602001908083835b60208310151561045b5780518252602082019150602081019050602083039250610436565b6001836020036101000a03801982511681845116808217855250505050505090500191505090815260200160405180910390209050600081600001541115156104a357600080fd5b60008160020160003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060009054906101000a900460ff1660028111156104ff57fe5b14151561050b57600080fd5b8161051757600261051a565b60015b8160020160003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060006101000a81548160ff0219169083600281111561057657fe5b02179055506001816000016000828254019250508190555081156105a857600181600101600082825401925050819055505b505050565b6000803373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060009054906101000a900460ff16151561060457600080fd5b60006002836040518082805190602001908083835b60208310151561063e5780518252602082019150602081019050602083039250610619565b6001836020036101000a03801982511681845116808217855250505050505090500191505090815260200160405180910390206000015414151561068157600080fd5b6040805190810160405280600181526020018261069f5760006106a2565b60015b60ff168152506002836040518082805190602001908083835b6020831015156106e057805182526020820191506020810190506020830392506106bb565b6001836020036101000a0380198251168184511680821785525050505050509050019150509081526020016040518091039020600082015181600001556020820151816001015590505080610736576002610739565b60015b6002836040518082805190602001908083835b602083101515610771578051825260208201915060208101905060208303925061074c565b6001836020036101000a038019825116818451168082178552505050505050905001915050908152602001604051809103902060020160003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060006101000a81548160ff021916908360028111156107ff57fe5b02179055505050565b60006020528060005260406000206000915054906101000a900460ff1681565b60006002836040518082805190602001908083835b602083101515610862578051825260208201915060208101905060208303925061083d565b6001836020036101000a038019825116818451168082178552505050505050905001915050908152602001604051809103902060020160008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060009054906101000a900460ff169050929150505600a165627a7a7230582096f25c7bb73e581a728241d45779676d76ee706b15dbc1c213d534f1fa7ad29c0029";
+const ABI = [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "memberCount",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "membership",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "members",
+          "type": "address[]"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "taskName",
+          "type": "string"
+        },
+        {
+          "name": "voteYes",
+          "type": "bool"
+        }
+      ],
+      "name": "propose",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "taskName",
+          "type": "string"
+        },
+        {
+          "name": "voteYes",
+          "type": "bool"
+        }
+      ],
+      "name": "vote",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "taskName",
+          "type": "string"
+        }
+      ],
+      "name": "result",
+      "outputs": [
+        {
+          "name": "voteCount",
+          "type": "uint256"
+        },
+        {
+          "name": "yesCount",
+          "type": "uint256"
+        },
+        {
+          "name": "totalMemberCount",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "taskName",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "type": "address"
+        }
+      ],
+      "name": "getVote",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ];

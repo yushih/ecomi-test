@@ -52,4 +52,9 @@ contract Organization {
         require(task.voteCount > 0);
         return (task.voteCount, task.yesCount, memberCount);
     }
+
+    function getVote (string taskName, address from) public view 
+        returns (Vote) {
+        return taskVotes[taskName].votes[from];
+    }
 }
