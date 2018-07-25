@@ -1,6 +1,8 @@
 // The organization interface.
 import React, { Component } from 'react';
+import Modal from 'react-modal';
 import YesNo from './YesNo';
+import './Organization.css';
 import * as blockchain from './blockchain';
 import * as utils from './utils';
 
@@ -20,7 +22,7 @@ export default Organization;
 class ProposePanel extends Component {
     constructor (props) {
         super(props);
-        this.state = { vote: 'yes'};
+        this.state = {vote: 'yes', proposal: ''};
 
         this.onPropose = this.onPropose.bind(this);
         this.onProposalChange = this.onProposalChange.bind(this);
@@ -47,6 +49,7 @@ class ProposePanel extends Component {
             .on('error', function (error) {
                 if (blockchain.didUserCancelTx(error)) {
                     // user canceled, not error
+                    self.setState({txPending: false});
                     return;
                 }
                 console.log('error', error);
@@ -60,25 +63,29 @@ class ProposePanel extends Component {
         // proposed successfully
         if (this.state.proposed) {
             const link = utils.getUrlForProposal(this.state.proposal);
-            return (<div>
+            return (<div className="alert alert-primary">
               Proposal "{this.state.proposal}" has been submitted. Use link <a href={link} target="_blank">{link}</a> to vote and check status.
             </div>);
         }
 
         return (<div>
-          { this.state.txPending &&
-            <div>transaction pending...</div>
-          }
+          <Modal isOpen={this.state.txPending}>
+            <div className="text-center">
+              <h1>transaction pending...</h1>
+            </div>
+          </Modal>
+
+          <h1 className="h3">Propose a new task:</h1>
           <div>
             <input type="text" onChange={this.onProposalChange} placeholder="Task name" />
           </div>
 
-          <div>
+          <div className="vote">
             My vote:
             <YesNo selectedValue={this.state.vote} onChange={this.onVoteChange} />
           </div>
           <div>
-            <button onClick={this.onPropose}>Propose</button>
+            <button disabled={this.state.proposal===''} className="btn btn-primary my-4" onClick={this.onPropose}>Propose</button>
           </div>
         </div>);
     }

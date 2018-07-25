@@ -1,5 +1,6 @@
 //The proposed task interface. Showing voting status and allow user to vote if she hasn't.
 import React, { Component } from 'react';
+import Modal from 'react-modal';
 import YesNo from './YesNo';
 import * as utils from './utils';
 import * as blockchain from './blockchain';
@@ -39,13 +40,13 @@ class Proposal extends Component {
     myVote () {
         if (this.state.myVote === '0') {
             return (<div>
-              <div>You have not voted yet.</div>
+              <h3>You have not voted yet.</h3>
               <VotePanel onVote={this.onVote} />
             </div>);
         } else if (this.state.myVote === '1') {
-            return <div>You have voted for approval.</div>;
+            return <h3>You have voted for approval.</h3>;
         } else {
-            return <div>You have voted for disapproval</div>;
+            return <h3>You have voted for disapproval</h3>;
         }
     }
 
@@ -62,12 +63,14 @@ class Proposal extends Component {
     }
 
     render () {
-        if (this.state.initializing) {
-            return <div>Fetching information from blockchain.</div>;
-        } 
         return (<div>
-          <div>Number of members: {this.state.totalMemberCount}, votes: {this.state.voteCount}, approvals: {this.state.yesCount}.</div>
-          <this.voteResult />
+          <Modal isOpen={this.state.initializing}>
+            <h1>Fetching information from blockchain...</h1>
+          </Modal>
+          <div className="alert alert-secondary">
+            <div>Number of members: {this.state.totalMemberCount}, votes: {this.state.voteCount}, approvals: {this.state.yesCount}.</div>
+            <this.voteResult />
+          </div>
           <this.myVote />
         </div>)
     }
@@ -105,13 +108,14 @@ class VotePanel extends Component {
     }
 
     render () {
-        if (this.state.votePending) {
-            return (<div>Vote pending...</div>);
-        }
-
         return (<div>
-          Approve this task: <YesNo selectedValue={this.state.vote} onChange={this.onVoteChange} />
-          <button onClick={this.onVote}>Vote</button>
+          <Modal isOpen={this.state.votePending}>
+            <h1>Vote pending...</h1>
+          </Modal>
+          <div className="vote">
+            Approve this task: <YesNo selectedValue={this.state.vote} onChange={this.onVoteChange} />
+            <button className="btn btn-primary" onClick={this.onVote}>Vote</button>
+          </div>
         </div>);
     }
 }

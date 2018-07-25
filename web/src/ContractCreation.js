@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import Modal from 'react-modal';
+import './ContractCreation.css';
 import * as blockchain from './blockchain';
 import * as utils from './utils';
 
@@ -26,17 +28,19 @@ class ContractCreation extends Component {
         // created
         if (!!this.state.contractAddress) {
             const link = utils.getUrlForOrganization(this.state.contractAddress);
-            return (<div>
+            return (<div className="alert alert-primary m-4">
               Organization contract created. Use <a href={link} target="_blank">{link}</a> to interact with it.
             </div>);
         }
 
         return (<div>
           <AddressList list={this.state.members}  />
-          <button onClick={this.onCreate}>Create Organization</button>
-          {this.state.pending &&
-           "transaction pending..."
-          }
+          <button className="btn btn-primary my-4" onClick={this.onCreate}>Create Organization</button>
+          <Modal isOpen={this.state.pending}>
+            <div className="text-center">
+              <h1>transaction pending...</h1>
+            </div>
+           </Modal>
         </div>);
     }
 }
@@ -53,7 +57,6 @@ class AddressList extends Component {
     }
 
     onInputChange (event) {
-        var addr;
         this.setState({addressToAdd: event.target.value,
                        addressValidated: /^0x[0-9a-fA-F]{40}$/.test(event.target.value)});
     }
@@ -75,17 +78,21 @@ class AddressList extends Component {
     render () {
         const self = this;
         return (<div>
-          Member adddresses:
-          <ul>
+          <h1 className="h3 mb-4">Member adddresses:</h1>
+          <ul className="list-group">
             {this.state.list.map((addr, i) =>
-               (<li key={i}>
-                 <span className="address">{addr}</span>
-                 <button onClick={self.onDelete.bind(null, i)}>del</button>
-              </li>)
+               (<li className="list-group-item" key={i}>
+                 <code>{addr}</code>
+                 <button className="btn" onClick={self.onDelete.bind(null, i)}>X</button>
+                </li>)
             )}
+            <li className="list-group-item">
+              <div className="input-group">
+                <input className="addressInput" value={this.state.addressToAdd} type="text" onChange={this.onInputChange} placeholder="member address" />
+                <button className="btn" onClick={this.onAdd} disabled={!this.state.addressValidated}>Add</button>
+              </div>
+            </li>
           </ul>
-          <input value={this.state.addressToAdd} type="text" onChange={this.onInputChange} placeholder="member address" />
-          <button onClick={this.onAdd} disabled={!this.state.addressValidated}>Add</button>  
         </div>);
     }
 }
